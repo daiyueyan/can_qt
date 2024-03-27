@@ -1,0 +1,15 @@
+debug/main.o
+debug/mainwindow.o
+debug/canthread.o
+debug/canparamsetting.o
+debug/mymethod.o
+debug/mytimer.o
+debug/protocolthrend.o
+debug/sendthreadcan.o
+debug/qrc_resonrces.o
+debug/moc_mainwindow.o
+debug/moc_canthread.o
+debug/moc_canparamsetting.o
+debug/moc_mytimer.o
+debug/moc_protocolthrend.o
+debug/moc_sendthreadcan.o

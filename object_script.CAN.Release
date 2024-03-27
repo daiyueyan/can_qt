@@ -1,0 +1,15 @@
+release/main.o
+release/mainwindow.o
+release/canthread.o
+release/canparamsetting.o
+release/mymethod.o
+release/mytimer.o
+release/protocolthrend.o
+release/sendthreadcan.o
+release/qrc_resonrces.o
+release/moc_mainwindow.o
+release/moc_canthread.o
+release/moc_canparamsetting.o
+release/moc_mytimer.o
+release/moc_protocolthrend.o
+release/moc_sendthreadcan.o
