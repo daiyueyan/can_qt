@@ -20,6 +20,7 @@ public:
     ~Upgrade();
 
     void HexString(quint8 vhex,QByteArray &vba);
+    uint32_t upgrade_app_crc_cal(void);
     uint8_t board_name;
     QString file_location;
 
