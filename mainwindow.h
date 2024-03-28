@@ -9,6 +9,7 @@
 #include "protocolthrend.h"
 #include "canthread.h"
 #include "sendthreadcan.h"
+#include "upgrade.h"
 
 namespace Ui {
 class MainWindow;
@@ -36,6 +37,10 @@ private slots:
 
     void displayText(QString info);
 
+    void on_btn_openfile_clicked();
+
+    void upgrade_file_location(QString fileName);
+
 private:
     Ui::MainWindow *ui;
     CANParamSetting *CANsetting;
@@ -43,6 +48,8 @@ private:
     CANThread *canthread;
     ProtocolThrend *protocolHand;
     QThread thread;
+
+    Upgrade *upgrade_ui;
     void init();
 };
 

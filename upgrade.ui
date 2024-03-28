@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>Upgrade</class>
+ <widget class="QDialog" name="Upgrade">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>789</width>
+    <height>602</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QPushButton" name="btn_upgrade">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>150</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>升级</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_open_file">
+   <property name="geometry">
+    <rect>
+     <x>683</x>
+     <y>20</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>打开文件</string>
+   </property>
+  </widget>
+  <widget class="QTextEdit" name="file_location">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>10</y>
+     <width>651</width>
+     <height>31</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QGroupBox" name="file_send_process">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>60</y>
+     <width>651</width>
+     <height>201</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="title">
+    <string>进度</string>
+   </property>
+   <widget class="QTextEdit" name="file_send_process_show">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>30</y>
+      <width>631</width>
+      <height>161</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="pb_send">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>0</y>
+      <width>306</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="value">
+     <number>0</number>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QComboBox" name="board_type">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>100</y>
+     <width>101</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <item>
+    <property name="text">
+     <string>控制盒</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>机头控制板</string>
+    </property>
+   </item>
+   <item>
+    <property name="text">
+     <string>屏幕</string>
+    </property>
+   </item>
+  </widget>
+  <widget class="QGroupBox" name="file_get">
+   <property name="geometry">
+    <rect>
+     <x>10</x>
+     <y>270</y>
+     <width>651</width>
+     <height>321</height>
+    </rect>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="title">
+    <string>文件内容</string>
+   </property>
+   <widget class="QTextEdit" name="file_get_show">
+    <property name="geometry">
+     <rect>
+      <x>8</x>
+      <y>30</y>
+      <width>631</width>
+      <height>331</height>
+     </rect>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QPushButton" name="btn_upgrade_out">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>560</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>退出</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

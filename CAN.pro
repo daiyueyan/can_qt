@@ -31,7 +31,8 @@ SOURCES += \
     mymethod.cpp \
     mytimer.cpp \
     protocolthrend.cpp \
-    sendthreadcan.cpp
+    sendthreadcan.cpp \
+    upgrade.cpp
 
 HEADERS += \
     includes.h \
@@ -42,11 +43,13 @@ HEADERS += \
     mymethod.h \
     mytimer.h \
     protocolthrend.h \
-    sendthreadcan.h
+    sendthreadcan.h \
+    upgrade.h
 
 FORMS += \
         mainwindow.ui \
-    canparamsetting.ui
+    canparamsetting.ui \
+    upgrade.ui
 
 CONFIG += qwt
 DEFINES += QT_DLL QWT_DLL
@@ -59,7 +62,9 @@ win32: LIBS += -L$$PWD/./ -lControlCAN
 INCLUDEPATH += $$PWD/.
 DEPENDPATH += $$PWD/.
 
-DISTFILES +=
+DISTFILES += \
+    Upgrade.qml \
+    UpgradeForm.ui.qml
 
 RESOURCES += \
     resonrces.qrc

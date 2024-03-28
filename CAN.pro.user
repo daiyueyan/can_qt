@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.11.1, 2024-03-27T16:10:23. -->
+<!-- Written by QtCreator 4.11.1, 2024-03-28T14:50:48. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -287,8 +287,9 @@
     </valuelist>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:D:/word/QT_Example/QT_Example/CAN.pro</value>
-    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">D:/word/QT_Example/QT_Example/CAN.pro</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">CAN2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">Qt4ProjectManager.Qt4RunConfiguration:D:/word/qt/can_qt/CAN.pro</value>
+    <value type="QString" key="ProjectExplorer.RunConfiguration.BuildKey">D:/word/qt/can_qt/CAN.pro</value>
     <value type="QString" key="RunConfiguration.Arguments"></value>
     <value type="bool" key="RunConfiguration.Arguments.multi">false</value>
     <value type="QString" key="RunConfiguration.OverrideDebuggerStartup"></value>

@@ -30,9 +30,11 @@ void MainWindow::init()
     thread_cansend = new SendThreadCan();
     canthread = new CANThread();
     protocolHand = new ProtocolThrend();
+    upgrade_ui = new Upgrade();
     connect(canthread,&CANThread::send_can_info_send,thread_cansend,&SendThreadCan::send_can_info_rev);
     connect(this,&MainWindow::send_can_out_send,thread_cansend,&SendThreadCan::send_can_out_rev);
     connect(canthread,&CANThread::getProtocolData,this,&MainWindow::displayText);
+    connect(upgrade_ui,&Upgrade::fileName_send,this,&MainWindow::upgrade_file_location);//Upgrade->mainwindow
     thread_cansend->start();
 }
 //在界面上把pushButton右键转为槽后自己生成on_pushButton_clicked函数
@@ -73,4 +75,15 @@ void MainWindow::on_pushButton_3_clicked()//发送
 void MainWindow::displayText(QString info)
 {
     ui->textEdit_2->setText(info);
+}
+
+void MainWindow::on_btn_openfile_clicked()
+{
+    qDebug()<<"upgrade_ui success";
+    upgrade_ui->show();
+}
+
+void MainWindow::upgrade_file_location(QString fileName)
+{
+
 }
