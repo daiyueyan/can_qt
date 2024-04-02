@@ -13,7 +13,7 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <widget class="QPushButton" name="btn_upgrade">
+  <widget class="QPushButton" name="btn_send">
    <property name="geometry">
     <rect>
      <x>680</x>
@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>升级</string>
+    <string>send</string>
    </property>
   </widget>
   <widget class="QPushButton" name="btn_open_file">
@@ -156,6 +156,19 @@
    </property>
    <property name="text">
     <string>退出</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_upgrade">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>190</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>upgrade</string>
    </property>
   </widget>
  </widget>

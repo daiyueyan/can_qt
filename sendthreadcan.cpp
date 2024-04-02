@@ -43,26 +43,76 @@ void SendThreadCan::send_can_info_rev(int type, int index, int com, bool open_fl
     open = open_flag;
 }
 
+int SendThreadCan::can_ymode_send(VCI_CAN_READ can_buff)
+{
+    if(STATUS_OK == can_send_data(can_buff.ID, can_buff.Data, can_buff.Len))
+    {
+        return STATUS_OK;
+    }
+    else
+    {
+        return STATUS_ERR;
+    }
+}
+//数据帧
+int SendThreadCan::can_send_data(uint32_t id, uint8_t *buf, uint8_t len)
+{
+    VCI_CAN_OBJ obj;
+
+    memset(&obj,0,sizeof(obj));
+
+    obj.ID = id;
+    obj.SendType = CAN_SEND_NORMAL;
+    obj.RemoteFlag = CAN_DATA_INFO;
+    obj.ExternFlag = CAN_FRAM_STANDARD;
+    obj.DataLen = len;
+
+    memcpy(obj.Data,buf,obj.DataLen);
+
+    if(1 == VCI_Transmit(deviceType,debicIndex,debicCom,&obj,1))
+    {
+        return STATUS_OK;
+    }
+    else
+    {
+        return STATUS_ERR;
+    }
+}
+//远程帧
+void SendThreadCan::can_send_remote(uint32_t id, uint8_t *buf, uint8_t len)
+{
+    VCI_CAN_OBJ obj;
+
+    memset(&obj,0,sizeof(obj));
+
+    obj.ID = id;
+    obj.SendType = CAN_SEND_NORMAL;
+    obj.RemoteFlag = CAN_DATA_REMOTE;
+    obj.ExternFlag = CAN_FRAM_STANDARD;
+    obj.DataLen = len;
+
+    memcpy(obj.Data,buf,obj.DataLen);
+
+    if(1 == VCI_Transmit(deviceType,debicIndex,debicCom,&obj,1))
+    {
+        qDebug()<<"远程帧发送成功";
+    }
+}
+
 void SendThreadCan::send_can_out_rev(int id, QString ch)
 {
+    VCI_CAN_OBJ obj;
+    uint8_t buf[1024] = {0};
+
     memset(&obj,0,sizeof(obj));
     //ID
     obj.ID = id;
-    //发送类型:正常
-    obj.SendType = CAN_SEND_NORMAL;
-    //数据类型:数据帧
-    obj.RemoteFlag = CAN_DATA_INFO;
-    //是否扩展帧：标准帧
-    obj.ExternFlag = CAN_FRAM_STANDARD;
-    //数据长度
     obj.DataLen = ch.remove(QRegExp("\\s")).size()/2;//去掉空格
     //数据
     QByteArray ba;
     QString tmpStr = ch;
     RET_IF_NOT_EAQU(Mymethod::GetInstance()->getBytesFromQString(tmpStr,ba),RET_OK);
-    memcpy(obj.Data,ba.data(),obj.DataLen);
-    if(1 == VCI_Transmit(deviceType,debicIndex,debicCom,&obj,1))
-    {
-        qDebug()<<"发送成功";
-    }
+    memcpy(buf, ba.data(),obj.DataLen);
+    can_send_data(obj.ID, buf, obj.DataLen);
 }
+

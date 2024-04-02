@@ -6,6 +6,7 @@
 #include "includes.h"
 #include <QDebug>
 #include "canparamsetting.h"
+#include "YmodemFileTransmit.h"
 #include "protocolthrend.h"
 #include "canthread.h"
 #include "sendthreadcan.h"
@@ -47,6 +48,7 @@ private:
     SendThreadCan *thread_cansend;
     CANThread *canthread;
     ProtocolThrend *protocolHand;
+    YmodemFileTransmit *ymodemFileTransmit;
     QThread thread;
 
     Upgrade *upgrade_ui;

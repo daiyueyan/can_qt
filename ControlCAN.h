@@ -44,6 +44,13 @@ typedef  struct  _VCI_BOARD_INFO{
 } VCI_BOARD_INFO,*PVCI_BOARD_INFO; 
 
 //2.定义CAN信息帧的数据类型。
+typedef  struct  _VCI_CAN_READ{
+    UINT	ID;
+    BYTE	Len;
+    BYTE	Data[8];
+}VCI_CAN_READ,*PVCI_CAN_READ;
+
+//3.定义CAN信息帧的数据类型。
 typedef  struct  _VCI_CAN_OBJ{
 	UINT	ID;
 	UINT	TimeStamp;
@@ -56,7 +63,7 @@ typedef  struct  _VCI_CAN_OBJ{
 	BYTE	Reserved[3];
 }VCI_CAN_OBJ,*PVCI_CAN_OBJ;
 
-//3.定义初始化CAN的数据类型
+//4.定义初始化CAN的数据类型
 typedef struct _VCI_INIT_CONFIG{
 	DWORD	AccCode;
 	DWORD	AccMask;

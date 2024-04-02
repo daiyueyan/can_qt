@@ -6,11 +6,12 @@
 #include <QMetaType>
 #include <string.h>
 
-    VCI_BOARD_INFO vbi;
+VCI_BOARD_INFO vbi;
 
 CANThread::CANThread()
 {
     stopped = false;
+    qRegisterMetaType<VCI_CAN_READ>("VCI_CAN_READ");
     qRegisterMetaType<VCI_CAN_OBJ>("VCI_CAN_OBJ");
     qRegisterMetaType<DWORD>("DWORD");
 }
@@ -33,7 +34,6 @@ bool CANThread::openCAN()
         return false;
     }
     else
-//        qDebug()<<"open success";
 
     dwRel = VCI_ClearBuffer(nDeviceType, nDeviceInd, nCANInd);
     dwRel = VCI_ClearBuffer(nDeviceType, nDeviceInd, nCANInd+1);
@@ -118,17 +118,13 @@ bool CANThread::openCAN()
     dwRel = VCI_InitCAN(nDeviceType, nDeviceInd, nCANInd+1, &vic);
     if(dwRel !=1)
     {
-//        qDebug()<<"init fail:"<<MB_OK<<MB_ICONQUESTION;
         return false;
     }
     else
-//        qDebug()<<"init success";
-
 
     dwRel = VCI_ReadBoardInfo(nDeviceType, nDeviceInd, &vbi);
     if(dwRel != 1)
     {
-//        qDebug()<<"get dev message fail:"<<MB_OK<<MB_ICONQUESTION;
         return false;
     }
     else
@@ -141,7 +137,6 @@ bool CANThread::openCAN()
 
     if(VCI_StartCAN(nDeviceType, nDeviceInd, nCANInd) !=1)
     {
-//        qDebug()<<"start"<<nCANInd<<"fail:"<<MB_OK<<MB_ICONQUESTION;
         return false;
     }
     else
@@ -150,13 +145,13 @@ bool CANThread::openCAN()
     int comid = nCANInd+1;
     if(VCI_StartCAN(nDeviceType, nDeviceInd, comid) !=1)
     {
-//        qDebug()<<"start"<<comid<<"fail:"<<MB_OK<<MB_ICONQUESTION;
         return false;
     }
     else
         qDebug()<<"start"<<comid<<"success:";
 
     emit send_can_info_send(deviceType, debicIndex, debicCom, true);
+    emit dev_open_send(true);
 
     return true;
 }
@@ -165,6 +160,7 @@ void CANThread::closeCAN()
 {
     VCI_CloseDevice(deviceType, debicIndex);
     emit send_can_info_send(deviceType, debicIndex, debicCom, false);
+    emit dev_open_send(false);
 }
 
 void CANThread::run()
@@ -186,17 +182,23 @@ void CANThread::run()
             {
                 for(int i = 0;i<dwRel;i++)
                 {
+                    VCI_CAN_READ can_read_data;
+                    can_read_data.ID = vco[i].ID;
+                    can_read_data.Len = vco[i].DataLen;
+                    memcpy(can_read_data.Data,vco[i].Data,vco[i].DataLen);
                     //获取ID
-                    QString idStr = QString("%1").arg(vco[i].ID,8,16,QLatin1Char('0'));
+                    QString idStr = QString("%1").arg(can_read_data.ID,8,16,QLatin1Char('0'));
                     //idStr就是can发送过来的can的ID的16进制了
                     //获取数据
                     QByteArray dataBa;
-                    dataBa.resize(vco[i].DataLen);
-                    memcpy(dataBa.data(),vco[i].Data,vco[i].DataLen);
+                    dataBa.resize(can_read_data.Len);
+                    memcpy(dataBa.data(),can_read_data.Data,can_read_data.Len);
                     QString dataStr = dataBa.toHex().toUpper();
                     Mymethod::GetInstance()->addSpaceInQString(dataStr);//为数据之间加上空格
                     //dataStr就是can发送过来的数据格式，只是数据没有包含can_id和帧类型
                     //qDebug()<<"idStr is "<< idStr;
+
+                    can_process(can_read_data);
                     //获取时间
                     QDateTime dt = QDateTime::currentDateTime();
                     QString timeStr = dt.toString("yyyy.MM.dd ");
@@ -211,12 +213,9 @@ void CANThread::run()
                     timeStr += canTimeStr;
                     ret =timeStr + "    " +  idStr + "    " + dataStr + "\n";
                     showInfo += ret;
-
-
                 }
                 if(showInfo != "")
                 {
-                    //qDebug()<<"showInfo is "<< showInfo;
                     emit getProtocolData(showInfo.trimmed());
                 }
             }
@@ -235,4 +234,57 @@ void CANThread::sleep(unsigned int msec)
    QTime dieTime = QTime::currentTime().addMSecs(msec);
    while( QTime::currentTime() < dieTime )
        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
+}
+
+void CANThread::can_process_file(VCI_CAN_READ can_read_file)
+{ 
+    switch(can_read_file.Data[0])
+    {
+    case CAN_CMD_FILE_CMD_MASTER:
+    
+    break;
+    
+    case CAN_CMD_FILE_FILE_MASTER:
+    break;
+    
+    case CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE:
+        VCI_CAN_READ read_buf_to_ymodem;
+        read_buf_to_ymodem.Len = can_read_file.Len - 1;
+        memcpy(read_buf_to_ymodem.Data,&can_read_file.Data[1],can_read_file.Len - 1);
+        emit qt_device_read_send(read_buf_to_ymodem);
+    break;
+    
+    case CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE_CRC:
+                
+    break;
+    
+    case CAN_CMD_FILE_CMD_SLAVE:
+    break;
+    
+    default:
+    break;
+    }
+}
+
+void CANThread::can_process(VCI_CAN_READ can_read)
+{
+    switch (can_read.ID)
+    {
+    case CAN_ID_CTRLBOX_TO_QT:
+        
+        break;
+        
+    case CAN_ID_TOPCBOX_TO_QT:
+        
+        break;
+        
+    case CAN_ID_CTRLBOX_TO_PC_FILE: 
+    case CAN_ID_TOPCBOX_TO_PC_FILE:
+        can_process_file(can_read);
+        break;
+        
+    default:
+        
+    break;
+    }
 }

@@ -6,6 +6,10 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QTimer>
+#include "sendthreadcan.h"
+#include "YmodemFileTransmit.h"
+#include "canthread.h"
+
 
 namespace Ui {
 class Upgrade;
@@ -20,20 +24,33 @@ public:
     ~Upgrade();
 
     void HexString(quint8 vhex,QByteArray &vba);
+    void dev_open_get(bool flag);
+    void ymodem_can_get(VCI_CAN_READ can_read_ymodem);
+    void can_ymodem_rx(uint8_t *data, uint32_t length, uint32_t *len_return);
+
     uint32_t upgrade_app_crc_cal(void);
     uint8_t board_name;
     QString file_location;
 
+
 signals:
     void fileName_send(QString file);
+    void ymodem_can_read(VCI_CAN_READ can_read_ymodem);
+    void ymodem_can_write(VCI_CAN_READ can_write_ymodem);
 
 private:
     int fileSize;
     int pkgsize;        //×Ö½Ú
-    int sendedByte;
+    int sendedByte;  
+    bool transmitButtonStatus;
+    bool receiveButtonStatus;
+    bool dev_open;
+
     QFile *sendfile;
     QByteArray txtcon;
-    QTimer *sendTimer;
+    SendThreadCan *thread_cansend;
+    YmodemFileTransmit *ymodemFileTransmit;
+    can_ymodem_rx_fifo_t* rx_fifo;
 
 private slots:
     void on_btn_open_file_clicked();
@@ -44,7 +61,11 @@ private slots:
 
     void on_btn_upgrade_clicked();
 
-    void slt_timCycle();
+    void transmitProgress(int progress);
+    void transmitStatus(YmodemFileTransmit::Status status);
+    void ymodem_can_send(VCI_CAN_READ can_write_ymodem);
+    void on_btn_send_clicked();
+
 private:
     Ui::Upgrade *ui;
 };

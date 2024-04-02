@@ -24,6 +24,8 @@ DEFINES += QT_DEPRECATED_WARNINGS
 
 
 SOURCES += \
+    YmodemFileReceive.cpp \
+    YmodemFileTransmit.cpp \
         main.cpp \
         mainwindow.cpp \
     canthread.cpp \
@@ -32,9 +34,12 @@ SOURCES += \
     mytimer.cpp \
     protocolthrend.cpp \
     sendthreadcan.cpp \
-    upgrade.cpp
+    upgrade.cpp \
+    ymodem.cpp
 
 HEADERS += \
+    YmodemFileReceive.h \
+    YmodemFileTransmit.h \
     includes.h \
         mainwindow.h \
     ControlCAN.h \
@@ -44,7 +49,8 @@ HEADERS += \
     mytimer.h \
     protocolthrend.h \
     sendthreadcan.h \
-    upgrade.h
+    upgrade.h \
+    ymodem.h
 
 FORMS += \
         mainwindow.ui \

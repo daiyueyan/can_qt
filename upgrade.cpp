@@ -1,53 +1,92 @@
 #include "upgrade.h"
 #include "ui_upgrade.h"
-#include <QCryptographicHash>
 #include <unistd.h>
 #include <fcntl.h>
 #include <sys/types.h>
+#include <QCoreApplication>
+#include "includes.h"
+#include <QList>
 
 Upgrade::Upgrade(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::Upgrade)
 {
     ui->setupUi(this);
+    qRegisterMetaType<can_ymodem_rx_fifo_t>("can_ymodem_rx_fifo_t");
+
+    ymodemFileTransmit = new YmodemFileTransmit();
+
+    //清空接收fifo
+    rx_fifo = (can_ymodem_rx_fifo_t*)malloc(sizeof(can_ymodem_rx_fifo_t)+  RT_CAN_YMODEM_DEVICE_SIZE);
+    rx_fifo->buffer = (uint8_t*) (rx_fifo + 1);
+    memset(rx_fifo->buffer, 0, RT_CAN_YMODEM_DEVICE_SIZE);
+    rx_fifo->put_index = 0;
+    rx_fifo->get_index = 0;
+    rx_fifo->is_full = false;
+
+    transmitButtonStatus = false;
+    receiveButtonStatus  = false;
     board_name = 0;
-    sendTimer=new QTimer(this);
     pkgsize=0;
+
+    ui->btn_send->setDisabled(true);
     ui->file_send_process_show->ensureCursorVisible();//文本自适应移动
-    connect(sendTimer,SIGNAL(timeout()),this,SLOT(slt_timCycle()));
+
+    connect(ymodemFileTransmit, SIGNAL(transmitStatus(YmodemFileTransmit::Status)), this, SLOT(transmitStatus(YmodemFileTransmit::Status)));//ymodemFileTransmit->upgrade
+    connect(ymodemFileTransmit,&YmodemFileTransmit::send_file,this,&Upgrade::ymodem_can_send);//ymodemFileTransmit->upgrade
+    connect(ymodemFileTransmit,&YmodemFileTransmit::transmit_read_request,this,&Upgrade::can_ymodem_rx);//ymodemFileTransmit->upgrade
+    connect(ymodemFileTransmit,&YmodemFileTransmit::transmitProgress,this,&Upgrade::transmitProgress);//ymodemFileTransmit->upgrade
 }
 
 Upgrade::~Upgrade()
 {
     delete ui;
+    delete ymodemFileTransmit;
+    delete rx_fifo;
 }
 
-void Upgrade::on_btn_open_file_clicked()//打开文件
+void Upgrade::on_btn_open_file_clicked()//打开文件并且计算crc32值
 {
     //获取文件目录file
-    QString file = QFileDialog::getOpenFileName(
+    file_location = QFileDialog::getOpenFileName(
                     this, "选择要升级的文件",
                     "/",
                     "所有文件 (*.*);; ");
-    if(file.isEmpty())
-        return;
-
-    ui->file_location->setText(file);
-    this->file_location = file;
-    //获取文件信息sendfile
-    sendfile=new QFile(file);
-    if (!sendfile->open(QFile::ReadOnly))
+    if(file_location.isEmpty())
     {
+        ui->btn_send->setDisabled(true);
         return;
     }
+
+    ui->file_location->setText(file_location);
+
+    //获取文件信息sendfile
+    sendfile=new QFile(file_location);
+    if (!sendfile->open(QFile::ReadOnly))
+    {
+        ui->btn_send->setDisabled(true);
+        return;
+    }
+    ui->btn_send->setEnabled(true);
+
     //获取文件多少个字节fileSize
     txtcon=sendfile->readAll();
     fileSize=txtcon.size();
     QString file_size = QString("The number is %1").arg(fileSize);
-    ui->file_send_process_show->append(file_size);
-
-    QString crc_string = QString::number(upgrade_app_crc_cal(), 16);
+    ui->file_send_process_show->append(file_size + " bytes");
+    //计算CRC32值
+    uint32_t crc_value = upgrade_app_crc_cal();
+    QString crc_string = QString::number(crc_value, 16);
     ui->file_send_process_show->append("crc32 of file : " +crc_string);
+    VCI_CAN_READ crc_send_out;
+    crc_send_out.ID = CAN_ID_QT_TO_CTRLBOX;
+    crc_send_out.Len = 5;
+    crc_send_out.Data[0] = CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE_CRC;
+    crc_send_out.Data[1] = crc_value & 0xff;
+    crc_send_out.Data[2] = crc_value >> 8;
+    crc_send_out.Data[3] = crc_value >> 16;
+    crc_send_out.Data[4] = crc_value >> 24;
+    emit ymodem_can_write(crc_send_out);
 
     QByteArray showhex;
     foreach(quint8 chr,txtcon)
@@ -55,7 +94,13 @@ void Upgrade::on_btn_open_file_clicked()//打开文件
         HexString(chr,showhex);
     }
 
-    ui->file_get_show->setPlainText(showhex);
+    ui->file_get_show->setPlainText(showhex);//显示二进制值形式显示文件的内容
+
+    rx_fifo->buffer = (uint8_t*) (rx_fifo + 1);
+    memset(rx_fifo->buffer, 0, RT_CAN_YMODEM_DEVICE_SIZE);
+    rx_fifo->put_index = 0;
+    rx_fifo->get_index = 0;
+    rx_fifo->is_full = false;
 }
 
 void Upgrade::on_btn_upgrade_out_clicked()//退出
@@ -65,7 +110,8 @@ void Upgrade::on_btn_upgrade_out_clicked()//退出
 
 void Upgrade::on_board_type_currentIndexChanged(const QString &arg1)
 {
-    qDebug()<<"arg1 is " << arg1;
+    ui->file_send_process_show->append(arg1);
+
     if(arg1 ==QString::fromLocal8Bit("控制盒"))
     {
         board_name = 0;
@@ -82,31 +128,189 @@ void Upgrade::on_board_type_currentIndexChanged(const QString &arg1)
      {}
 }
 
-void Upgrade::on_btn_upgrade_clicked()//升级
+void Upgrade::on_btn_send_clicked()//发送按键
 {
-    sendTimer->start(200);
+    VCI_CAN_READ crc_send_out;
+    crc_send_out.ID = CAN_ID_QT_TO_CTRLBOX;
+    crc_send_out.Len = 2;
+    crc_send_out.Data[0] = CAN_CMD_FILE_FILE_MASTER;
+    crc_send_out.Data[1] = CAN_CMD_FILE_FILE_MASTER_SEND_FILE;
+    emit ymodem_can_write(crc_send_out);
+
+    if(transmitButtonStatus == false)//表示当前没有在传输数据，可进行传输数据
+    {
+        ymodemFileTransmit->setFileName(file_location);//把文件目录传出去
+
+        if(ymodemFileTransmit->startTransmit() == true)//可以打开串口，打开定时器
+        {
+            ui->file_send_process_show->append("start to send file");
+            transmitButtonStatus = true;//表示正在传输
+
+            ui->btn_open_file->setDisabled(true);//发送的浏览按键不可按下
+            ui->btn_send->setText("cancel");//发送的发送按键文本为"取消"
+            ui->pb_send->setValue(0);//进度设置为0
+        }
+        else
+        {
+            QMessageBox::warning(this, "failed", "file send failed", "close");
+        }
+    }
+    else
+    {
+        ymodemFileTransmit->stopTransmit();//停止传输
+    }
 }
 
-void Upgrade::slt_timCycle()
+void Upgrade::on_btn_upgrade_clicked()//升级按键
 {
-    int remainlen=fileSize-sendedByte;
+    VCI_CAN_READ crc_send_out;
+    crc_send_out.ID = CAN_ID_QT_TO_CTRLBOX;
+    crc_send_out.Len = 2;
+    crc_send_out.Data[0] = CAN_CMD_FILE_FILE_MASTER;
+    crc_send_out.Data[1] = CAN_CMD_FILE_FILE_MASTER_UPGRADE;
+    emit ymodem_can_write(crc_send_out);
+}
 
-    QString remain = QString("remain = %1").arg(fileSize);
-    ui->file_send_process_show->append(remain);
+void Upgrade::transmitProgress(int progress)//显示传输进度
+{
+    ui->pb_send->setValue(progress);
+}
 
-    QByteArray sendBa=txtcon.mid(sendedByte,remainlen);
-
-    //my_port->write(sendBa,remainlen);
-    sendedByte+=remainlen;
-
-    int sendpro=sendedByte*100/fileSize;
-    ui->pb_send->setValue(sendpro);
-
-    if(sendedByte==fileSize)
+void Upgrade::transmitStatus(Ymodem::Status status)
+{
+    switch(status)
     {
-        ui->file_send_process_show->append("send end");
-        sendTimer->stop();
+        case YmodemFileTransmit::StatusEstablish:
+        {
+            break;
+        }
+
+        case YmodemFileTransmit::StatusTransmit:
+        {
+            break;
+        }
+
+        case YmodemFileTransmit::StatusFinish:
+        {
+            transmitButtonStatus = false;
+
+            ui->btn_open_file->setEnabled(true);
+            ui->btn_send->setText("send");
+
+            QMessageBox::warning(this, "success", "file send success", "close");
+
+            break;
+        }
+
+        case YmodemFileTransmit::StatusAbort:
+        {
+            transmitButtonStatus = false;
+
+            ui->btn_open_file->setEnabled(true);
+            ui->btn_send->setText("send");
+
+            QMessageBox::warning(this, "failed", "file send failed", "close");
+
+            break;
+        }
+
+        case YmodemFileTransmit::StatusTimeout:
+        {
+            transmitButtonStatus = false;
+
+            ui->btn_open_file->setEnabled(true);
+            ui->btn_send->setText("send");
+
+            QMessageBox::warning(this, "failed", "file send failed", "close");
+
+            break;
+        }
+
+        default:
+        {
+            transmitButtonStatus = false;
+
+            ui->btn_open_file->setEnabled(true);
+            ui->btn_send->setText("send");
+
+            QMessageBox::warning(this, "failed", "file send failed", "close");
+        }
     }
+}
+
+void Upgrade::ymodem_can_send(VCI_CAN_READ can_write_ymodem)
+{
+    emit ymodem_can_write(can_write_ymodem);
+}
+
+void Upgrade::dev_open_get(bool flag)
+{
+    dev_open = flag;
+}
+//把接收的数据转到fifo中
+void Upgrade::ymodem_can_get(VCI_CAN_READ can_read_ymodem)
+{
+    int ch = -1;
+    int length = 0;
+
+    while (length < can_read_ymodem.Len)
+    {
+        ch = can_read_ymodem.Data[length];
+        length ++;
+
+        rx_fifo->buffer[rx_fifo->put_index] = ch;
+
+        rx_fifo->put_index += 1;
+
+        if (rx_fifo->put_index >= RT_CAN_YMODEM_DEVICE_SIZE)
+        {
+            rx_fifo->put_index = 0;
+        }
+
+        if (rx_fifo->put_index == rx_fifo->get_index)
+        {
+            rx_fifo->get_index += 1;
+            rx_fifo->is_full = true;
+            if (rx_fifo->get_index >= RT_CAN_YMODEM_DEVICE_SIZE)
+            {
+                rx_fifo->get_index = 0;
+            }
+        }
+    }
+    //释放信号量
+    emit ymodem_can_read(can_read_ymodem);
+}
+
+//读取fifo中的数据
+void Upgrade::can_ymodem_rx(uint8_t *data, uint32_t length, uint32_t *len_return)
+{
+    uint32_t size;
+    size = length;
+
+    while (length)
+    {
+        int ch;
+
+        if ((rx_fifo->get_index == rx_fifo->put_index) && (rx_fifo->is_full == false))
+        {
+            break;
+        }
+
+        /* otherwise there's the data: */
+        ch = rx_fifo->buffer[rx_fifo->get_index];
+        rx_fifo->get_index += 1;
+        if (rx_fifo->get_index >= RT_CAN_YMODEM_DEVICE_SIZE) rx_fifo->get_index = 0;
+
+        if (rx_fifo->is_full == true)
+        {
+            rx_fifo->is_full = false;
+        }
+
+        *data = ch & 0xff;
+        data ++;
+        length --;
+    }
+    *len_return = size - length;
 }
 
 void Upgrade::HexString(quint8 vhex,QByteArray &vba)
@@ -227,3 +431,4 @@ uint32_t Upgrade::upgrade_app_crc_cal(void)
 
     return crc_value_get;
 }
+

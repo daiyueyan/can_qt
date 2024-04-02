@@ -3,7 +3,9 @@
 
 #include <QThread>
 #include "ControlCAN.h"
+#include <stdint.h>
 #include "includes.h"
+#include <QMetaType>
 #include <QDebug>
 #include <QString>
 
@@ -31,12 +33,16 @@ signals:
     //接收到can数据的信号，然后发送给主线程进行显示
     void getProtocolData(QString info);
     void send_can_info_send(int type, int index, int com, bool open_flag);
+    void dev_open_send(bool flag);
+    void qt_device_read_send(VCI_CAN_READ can_read_ymodem);
 private:
     std::vector<QString> addrsVc;
     std::vector<QString> packeetVc;
 
     void run();
     void sleep(unsigned int msec);
+    void can_process(VCI_CAN_READ can_read);
+    void can_process_file(VCI_CAN_READ can_read_file);
 
 };
 
