@@ -31,6 +31,7 @@ Upgrade::Upgrade(QWidget *parent) :
 
     ui->btn_send->setDisabled(true);
     ui->file_send_process_show->ensureCursorVisible();//文本自适应移动
+    ui->btn_upgrade->setDisabled(true);
 
     connect(ymodemFileTransmit, SIGNAL(transmitStatus(YmodemFileTransmit::Status)), this, SLOT(transmitStatus(YmodemFileTransmit::Status)));//ymodemFileTransmit->upgrade
     connect(ymodemFileTransmit,&YmodemFileTransmit::send_file,this,&Upgrade::ymodem_can_send);//ymodemFileTransmit->upgrade
@@ -75,18 +76,9 @@ void Upgrade::on_btn_open_file_clicked()//打开文件并且计算crc32值
     QString file_size = QString("The number is %1").arg(fileSize);
     ui->file_send_process_show->append(file_size + " bytes");
     //计算CRC32值
-    uint32_t crc_value = upgrade_app_crc_cal();
+    crc_value = upgrade_app_crc_cal();
     QString crc_string = QString::number(crc_value, 16);
     ui->file_send_process_show->append("crc32 of file : " +crc_string);
-    VCI_CAN_READ crc_send_out;
-    crc_send_out.ID = CAN_ID_QT_TO_CTRLBOX;
-    crc_send_out.Len = 5;
-    crc_send_out.Data[0] = CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE_CRC;
-    crc_send_out.Data[1] = crc_value & 0xff;
-    crc_send_out.Data[2] = crc_value >> 8;
-    crc_send_out.Data[3] = crc_value >> 16;
-    crc_send_out.Data[4] = crc_value >> 24;
-    emit ymodem_can_write(crc_send_out);
 
     QByteArray showhex;
     foreach(quint8 chr,txtcon)
@@ -130,13 +122,6 @@ void Upgrade::on_board_type_currentIndexChanged(const QString &arg1)
 
 void Upgrade::on_btn_send_clicked()//发送按键
 {
-    VCI_CAN_READ crc_send_out;
-    crc_send_out.ID = CAN_ID_QT_TO_CTRLBOX;
-    crc_send_out.Len = 2;
-    crc_send_out.Data[0] = CAN_CMD_FILE_FILE_MASTER;
-    crc_send_out.Data[1] = CAN_CMD_FILE_FILE_MASTER_SEND_FILE;
-    emit ymodem_can_write(crc_send_out);
-
     if(transmitButtonStatus == false)//表示当前没有在传输数据，可进行传输数据
     {
         ymodemFileTransmit->setFileName(file_location);//把文件目录传出去
@@ -149,6 +134,21 @@ void Upgrade::on_btn_send_clicked()//发送按键
             ui->btn_open_file->setDisabled(true);//发送的浏览按键不可按下
             ui->btn_send->setText("cancel");//发送的发送按键文本为"取消"
             ui->pb_send->setValue(0);//进度设置为0
+            ui->btn_upgrade->setDisabled(true);
+
+            VCI_CAN_READ crc_send_out;
+            crc_send_out.ID = CAN_ID_QT_TO_OBOX_FILE;
+            crc_send_out.Len = 1;
+            crc_send_out.Data[0] = CAN_CMD_FILE_QT_TO_CTRL_FILE_START;
+            emit ymodem_can_write(crc_send_out);
+
+            crc_send_out.Len = 5;
+            crc_send_out.Data[0] = CAN_CMD_FILE_QT_TO_CTRL_FILE_SLAVE_CRC;
+            crc_send_out.Data[1] = crc_value & 0xff;
+            crc_send_out.Data[2] = crc_value >> 8;
+            crc_send_out.Data[3] = crc_value >> 16;
+            crc_send_out.Data[4] = crc_value >> 24;
+            emit ymodem_can_write(crc_send_out);
         }
         else
         {
@@ -164,10 +164,9 @@ void Upgrade::on_btn_send_clicked()//发送按键
 void Upgrade::on_btn_upgrade_clicked()//升级按键
 {
     VCI_CAN_READ crc_send_out;
-    crc_send_out.ID = CAN_ID_QT_TO_CTRLBOX;
-    crc_send_out.Len = 2;
-    crc_send_out.Data[0] = CAN_CMD_FILE_FILE_MASTER;
-    crc_send_out.Data[1] = CAN_CMD_FILE_FILE_MASTER_UPGRADE;
+    crc_send_out.ID = CAN_ID_QT_TO_OBOX_FILE;
+    crc_send_out.Len = 1;
+    crc_send_out.Data[0] = CAN_CMD_FILE_QT_TO_CTRL_FILE_UPGRADE;
     emit ymodem_can_write(crc_send_out);
 }
 
@@ -279,6 +278,54 @@ void Upgrade::ymodem_can_get(VCI_CAN_READ can_read_ymodem)
     }
     //释放信号量
     emit ymodem_can_read(can_read_ymodem);
+}
+
+void Upgrade::upgrade_info_get(VCI_CAN_READ can_read_ymodem)
+{
+    switch(can_read_ymodem.Data[0])
+    {
+    case CAN_CMD_FILE_CMD_MASTER:
+
+    break;
+
+    case CAN_CMD_FILE_FILE_MASTER:
+    break;
+
+    case CAN_CMD_FILE_QT_TO_CTRL_FILE_FILE:
+    {
+        VCI_CAN_READ read_buf_to_ymodem;
+        read_buf_to_ymodem.Len = can_read_ymodem.Len - 1;
+        memcpy(read_buf_to_ymodem.Data,&can_read_ymodem.Data[1],can_read_ymodem.Len - 1);
+        ymodem_can_get(read_buf_to_ymodem);
+    }
+    break;
+
+    case CAN_CMD_FILE_QT_TO_CTRL_FILE_SLAVE_CRC:
+        ui->file_send_process_show->append("ctrl_crc32 of file err !");
+    break;
+
+    case PROTOCOL_CMD_QT_TO_CTRLBOX_UPGRADE_PER:
+    {
+        QString per = QString::number(can_read_ymodem.Data[1], 10);
+        ui->file_send_process_show->append("ctrlbox upgrade output : " + per + "%");
+    }
+    break;
+
+    case PROTOCOL_CMD_QT_TO_CTRLBOX_UPGRADE_END:
+        ui->btn_upgrade->setEnabled(true);
+    break;
+
+    case CAN_CMD_FILE_QT_TO_CTRL_FILE_UPGRADE_SUCC:
+        ui->file_send_process_show->append("ctrlbox upgrade succ");
+    break;
+
+    case CAN_CMD_FILE_CMD_SLAVE:
+
+    break;
+
+    default:
+    break;
+    }
 }
 
 //读取fifo中的数据

@@ -236,52 +236,25 @@ void CANThread::sleep(unsigned int msec)
        QCoreApplication::processEvents(QEventLoop::AllEvents, 100);
 }
 
-void CANThread::can_process_file(VCI_CAN_READ can_read_file)
-{ 
-    switch(can_read_file.Data[0])
-    {
-    case CAN_CMD_FILE_CMD_MASTER:
-    
-    break;
-    
-    case CAN_CMD_FILE_FILE_MASTER:
-    break;
-    
-    case CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE:
-        VCI_CAN_READ read_buf_to_ymodem;
-        read_buf_to_ymodem.Len = can_read_file.Len - 1;
-        memcpy(read_buf_to_ymodem.Data,&can_read_file.Data[1],can_read_file.Len - 1);
-        emit qt_device_read_send(read_buf_to_ymodem);
-    break;
-    
-    case CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE_CRC:
-                
-    break;
-    
-    case CAN_CMD_FILE_CMD_SLAVE:
-    break;
-    
-    default:
-    break;
-    }
-}
-
 void CANThread::can_process(VCI_CAN_READ can_read)
 {
     switch (can_read.ID)
     {
     case CAN_ID_CTRLBOX_TO_QT:
         
-        break;
+    break;
         
     case CAN_ID_TOPCBOX_TO_QT:
         
-        break;
+    break;
         
-    case CAN_ID_CTRLBOX_TO_PC_FILE: 
-    case CAN_ID_TOPCBOX_TO_PC_FILE:
-        can_process_file(can_read);
-        break;
+    case CAN_ID_QT_TO_OBOX_FILE:
+        emit upgrade_info(can_read);
+    break;
+
+    case CAN_ID_QT_TO_TOPCBOX_FILE:
+
+    break;
         
     default:
         

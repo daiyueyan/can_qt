@@ -42,7 +42,7 @@ void MainWindow::init()
     connect(this,&MainWindow::send_can_out_send,thread_cansend,&SendThreadCan::send_can_out_rev);
     connect(canthread,&CANThread::getProtocolData,this,&MainWindow::displayText);
     connect(upgrade_ui,&Upgrade::fileName_send,this,&MainWindow::upgrade_file_location);//Upgrade->mainwindow
-    connect(canthread,&CANThread::qt_device_read_send,upgrade_ui,&Upgrade::ymodem_can_get);//CANThread->ymodemFileTransmit
+    connect(canthread,&CANThread::upgrade_info,upgrade_ui,&Upgrade::upgrade_info_get);//CANThread->ymodemFileTransmit
     connect(upgrade_ui,&Upgrade::ymodem_can_write,thread_cansend,&SendThreadCan::can_ymode_send);//ymodemFileTransmit->SendThreadCan
     thread_cansend->start();
 }

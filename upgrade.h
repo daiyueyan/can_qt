@@ -26,6 +26,7 @@ public:
     void HexString(quint8 vhex,QByteArray &vba);
     void dev_open_get(bool flag);
     void ymodem_can_get(VCI_CAN_READ can_read_ymodem);
+    void upgrade_info_get(VCI_CAN_READ can_read_ymodem);
     void can_ymodem_rx(uint8_t *data, uint32_t length, uint32_t *len_return);
 
     uint32_t upgrade_app_crc_cal(void);
@@ -45,6 +46,7 @@ private:
     bool transmitButtonStatus;
     bool receiveButtonStatus;
     bool dev_open;
+    uint32_t crc_value;
 
     QFile *sendfile;
     QByteArray txtcon;

@@ -220,8 +220,8 @@ uint32_t YmodemFileTransmit::write(uint8_t *buff, uint32_t len)
     uint8_t size_else = 0;
     uint32_t cur_addr = 0;
 
-    can_write_ymodem.ID = CAN_ID_CTRLBOX_TO_PC_FILE;
-    can_write_ymodem.Data[0] = CAN_CMD_FILE_FILE_SLAVE;
+    can_write_ymodem.ID = CAN_ID_QT_TO_OBOX_FILE;
+    can_write_ymodem.Data[0] = CAN_CMD_FILE_QT_TO_CTRL_FILE_FILE;
     //以7个字节读取数据写入can设备中，因为还有一个功能码
     size_else = len % YMODEM_READ_SEND_OUT;
     for(cur_addr = 0; cur_addr < (len - size_else); cur_addr+=YMODEM_READ_SEND_OUT)
