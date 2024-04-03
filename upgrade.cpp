@@ -311,6 +311,7 @@ void Upgrade::upgrade_info_get(VCI_CAN_READ can_read_ymodem)
     {
         QString per = QString::number(can_read_ymodem.Data[1], 10);
         ui->file_send_process_show->append("ctrlbox upgrade output : " + per + "%");
+        ui->file_send_process_show->moveCursor(QTextCursor::End);
     }
     break;
 
@@ -339,6 +340,7 @@ void Upgrade::upgrade_info_get(VCI_CAN_READ can_read_ymodem)
         {
             ui->file_get_show->append("ctrlbox log output failed!");
         }
+        ui->file_get_show->moveCursor(QTextCursor::End);
     }
     break;
 

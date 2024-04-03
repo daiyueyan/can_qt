@@ -40,8 +40,6 @@ private slots:
 
     void on_btn_openfile_clicked();
 
-    void upgrade_file_location(QString fileName);
-
 private:
     Ui::MainWindow *ui;
     CANParamSetting *CANsetting;

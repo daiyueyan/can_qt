@@ -36,7 +36,6 @@ public:
 
 
 signals:
-    void fileName_send(QString file);
     void ymodem_can_read(VCI_CAN_READ can_read_ymodem);
     void ymodem_can_write(VCI_CAN_READ can_write_ymodem);
 
@@ -73,8 +72,6 @@ private slots:
     void on_btn_send_clicked();
 
     void on_btn_revbrowse_clicked();
-
-    void on_btn_upgrade_2_clicked();
 
     void on_btn_rev_clicked();
 
