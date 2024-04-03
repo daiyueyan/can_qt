@@ -95,14 +95,14 @@ void Ymodem::receive()
   {
     case StageNone:
     {
-      receiveStageNone();
+      receiveStageNone();//发送43请求数据_rym_do_handshake函数开头
 
       break;
     }
 
     case StageEstablishing:
     {
-      receiveStageEstablishing();
+      receiveStageEstablishing();//_rym_do_handshake
 
       break;
     }
@@ -341,7 +341,7 @@ void Ymodem::receiveStageEstablishing()
       {
         uint32_t dataLength = YMODEM_PACKET_SIZE;
 
-        if(callback(StatusEstablish, &(rxBuffer[YMODEM_PACKET_HEADER]), &dataLength) == CodeAck)
+        if(callback(StatusEstablish, &(rxBuffer[YMODEM_PACKET_HEADER]), &dataLength) == CodeAck)//rym_recv_on_device函数的ymodem_on_begin函数
         {
           timeCount   = 0;
           errorCount  = 0;
@@ -349,8 +349,15 @@ void Ymodem::receiveStageEstablishing()
           code        = CodeNone;
           stage       = StageEstablished;
           txBuffer[0] = CodeAck;
-          txBuffer[1] = CodeC;
-          txLength    = 2;
+          txLength    = 1;
+          write(txBuffer, txLength);
+          timeCount   = 0;
+          errorCount  = 0;
+          dataCount   = 0;
+          code        = CodeNone;
+          stage       = StageEstablished;
+          txBuffer[0] = CodeC;
+          txLength    = 1;
           write(txBuffer, txLength);
         }
         else

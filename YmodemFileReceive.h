@@ -5,6 +5,7 @@
 #include <QTimer>
 #include <QObject>
 #include "Ymodem.h"
+#include "includes.h"
 
 class YmodemFileReceive : public QObject, public Ymodem
 {
@@ -28,6 +29,8 @@ public:
 signals:
     void receiveProgress(int progress);
     void receiveStatus(YmodemFileReceive::Status status);
+    int send_file(VCI_CAN_READ can_write_ymodem);
+    uint32_t transmit_read_request(uint8_t *buff, uint32_t len, uint32_t *len_return);
 
 private slots:
     void readTimeOut();

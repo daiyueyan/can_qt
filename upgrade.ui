@@ -29,8 +29,8 @@
   <widget class="QPushButton" name="btn_open_file">
    <property name="geometry">
     <rect>
-     <x>683</x>
-     <y>20</y>
+     <x>680</x>
+     <y>10</y>
      <width>101</width>
      <height>24</height>
     </rect>
@@ -42,9 +42,9 @@
   <widget class="QTextEdit" name="file_location">
    <property name="geometry">
     <rect>
-     <x>10</x>
+     <x>100</x>
      <y>10</y>
-     <width>651</width>
+     <width>561</width>
      <height>31</height>
     </rect>
    </property>
@@ -55,7 +55,7 @@
      <x>10</x>
      <y>60</y>
      <width>651</width>
-     <height>201</height>
+     <height>221</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -73,7 +73,7 @@
       <x>10</x>
       <y>30</y>
       <width>631</width>
-      <height>161</height>
+      <height>181</height>
      </rect>
     </property>
    </widget>
@@ -120,9 +120,9 @@
    <property name="geometry">
     <rect>
      <x>10</x>
-     <y>270</y>
+     <y>330</y>
      <width>651</width>
-     <height>321</height>
+     <height>261</height>
     </rect>
    </property>
    <property name="sizePolicy">
@@ -132,16 +132,29 @@
     </sizepolicy>
    </property>
    <property name="title">
-    <string>文件内容</string>
+    <string>进度</string>
    </property>
    <widget class="QTextEdit" name="file_get_show">
     <property name="geometry">
      <rect>
-      <x>8</x>
+      <x>10</x>
       <y>30</y>
       <width>631</width>
-      <height>331</height>
+      <height>221</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QProgressBar" name="progress_rev">
+    <property name="geometry">
+     <rect>
+      <x>60</x>
+      <y>0</y>
+      <width>306</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="value">
+     <number>0</number>
     </property>
    </widget>
   </widget>
@@ -169,6 +182,80 @@
    </property>
    <property name="text">
     <string>upgrade</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_revbrowse">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>300</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Browes</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>20</y>
+     <width>68</width>
+     <height>15</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Agency FB</family>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>文件路径：</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>300</y>
+     <width>68</width>
+     <height>15</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Agency FB</family>
+     <pointsize>8</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>文件路径：</string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="rev_file_location">
+   <property name="geometry">
+    <rect>
+     <x>100</x>
+     <y>300</y>
+     <width>561</width>
+     <height>23</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="btn_rev">
+   <property name="geometry">
+    <rect>
+     <x>680</x>
+     <y>350</y>
+     <width>101</width>
+     <height>24</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>receive</string>
    </property>
   </widget>
  </widget>

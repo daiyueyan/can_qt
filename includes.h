@@ -81,12 +81,12 @@ typedef enum{
 
 typedef enum
 {
-    CAN_CMD_FILE_CMD_MASTER = 0,                //ä¸»æ?ºæ??ä»¶å?½ä»¤
-    CAN_CMD_FILE_CMD_SLAVE,                     //ä»??ºæ??ä»¶å?½ä»¤
-    CAN_CMD_FILE_FILE_MASTER,                   //ä¸»æ?ºæ??ä»?
-    CAN_CMD_FILE_FILE_SLAVE,                    //ä»??ºæ??ä»?
-    CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE,    //ä¸»æ?§æ?¿ç??ºå¤´?§å?¶æ?¿ç????ä»?
-    CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE_CRC,    //ä¸»æ?§æ?¿ç??ºå¤´?§å?¶æ?¿ç????ä»¶ç??crc??
+    CAN_CMD_FILE_CMD_MASTER = 0,
+    CAN_CMD_FILE_CMD_SLAVE,
+    CAN_CMD_FILE_FILE_MASTER,
+    CAN_CMD_FILE_FILE_SLAVE,
+    CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE,
+    CAN_CMD_FILE_CTRL_TO_TOPCTRL_FILE_SLAVE_CRC,
     PROTOCOL_CMD_TOPCTRL_TO_CTRLBOX_UPGRADE_PER,
     PROTOCOL_CMD_QT_TO_CTRLBOX_UPGRADE_PER,
     PROTOCOL_CMD_TOPCTRL_TO_CTRLBOX_UPGRADE_END,
@@ -101,6 +101,9 @@ typedef enum
     CAN_CMD_FILE_QT_TO_TOPCBOX_FILE_UPGRADE,
     CAN_CMD_FILE_QT_TO_CTRL_FILE_UPGRADE_SUCC,
     CAN_CMD_FILE_QT_TO_TOPCBOX_FILE_UPGRADE_SUCC,
+    CAN_CMD_FILE_QT_TO_CTRL_LOG_FILE_START,
+    CAN_CMD_FILE_QT_TO_CTRL_LOG_PER,
+    CAN_CMD_FILE_QT_TO_CTRL_LOG_SUCC,
 
 }can_cmd_file_t;
 

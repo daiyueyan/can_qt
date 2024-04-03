@@ -15,6 +15,7 @@ Upgrade::Upgrade(QWidget *parent) :
     qRegisterMetaType<can_ymodem_rx_fifo_t>("can_ymodem_rx_fifo_t");
 
     ymodemFileTransmit = new YmodemFileTransmit();
+    ymodemFileReceive = new YmodemFileReceive();
 
     //清空接收fifo
     rx_fifo = (can_ymodem_rx_fifo_t*)malloc(sizeof(can_ymodem_rx_fifo_t)+  RT_CAN_YMODEM_DEVICE_SIZE);
@@ -32,17 +33,24 @@ Upgrade::Upgrade(QWidget *parent) :
     ui->btn_send->setDisabled(true);
     ui->file_send_process_show->ensureCursorVisible();//文本自适应移动
     ui->btn_upgrade->setDisabled(true);
+    ui->btn_revbrowse->setEnabled(true);
+    ui->btn_rev->setDisabled(true);
 
+    connect(ymodemFileReceive, SIGNAL(receiveStatus(YmodemFileReceive::Status)), this, SLOT(receiveStatus(YmodemFileReceive::Status)));//ymodemFileReceive->upgrade
     connect(ymodemFileTransmit, SIGNAL(transmitStatus(YmodemFileTransmit::Status)), this, SLOT(transmitStatus(YmodemFileTransmit::Status)));//ymodemFileTransmit->upgrade
     connect(ymodemFileTransmit,&YmodemFileTransmit::send_file,this,&Upgrade::ymodem_can_send);//ymodemFileTransmit->upgrade
+    connect(ymodemFileReceive,&YmodemFileReceive::send_file,this,&Upgrade::ymodem_can_send);//ymodemFileReceive->upgrade
     connect(ymodemFileTransmit,&YmodemFileTransmit::transmit_read_request,this,&Upgrade::can_ymodem_rx);//ymodemFileTransmit->upgrade
+    connect(ymodemFileReceive,&YmodemFileReceive::transmit_read_request,this,&Upgrade::can_ymodem_rx);//ymodemFileReceive->upgrade
     connect(ymodemFileTransmit,&YmodemFileTransmit::transmitProgress,this,&Upgrade::transmitProgress);//ymodemFileTransmit->upgrade
+    connect(ymodemFileReceive,&YmodemFileReceive::receiveProgress,this,&Upgrade::receiveProgress);//ymodemFileReceive->upgrade
 }
 
 Upgrade::~Upgrade()
 {
     delete ui;
     delete ymodemFileTransmit;
+    delete ymodemFileReceive;
     delete rx_fifo;
 }
 
@@ -69,6 +77,8 @@ void Upgrade::on_btn_open_file_clicked()//打开文件并且计算crc32值
         return;
     }
     ui->btn_send->setEnabled(true);
+    ui->btn_revbrowse->setDisabled(true);
+    ui->btn_rev->setDisabled(true);
 
     //获取文件多少个字节fileSize
     txtcon=sendfile->readAll();
@@ -79,14 +89,6 @@ void Upgrade::on_btn_open_file_clicked()//打开文件并且计算crc32值
     crc_value = upgrade_app_crc_cal();
     QString crc_string = QString::number(crc_value, 16);
     ui->file_send_process_show->append("crc32 of file : " +crc_string);
-
-    QByteArray showhex;
-    foreach(quint8 chr,txtcon)
-    {
-        HexString(chr,showhex);
-    }
-
-    ui->file_get_show->setPlainText(showhex);//显示二进制值形式显示文件的内容
 
     rx_fifo->buffer = (uint8_t*) (rx_fifo + 1);
     memset(rx_fifo->buffer, 0, RT_CAN_YMODEM_DEVICE_SIZE);
@@ -195,6 +197,7 @@ void Upgrade::transmitStatus(Ymodem::Status status)
 
             ui->btn_open_file->setEnabled(true);
             ui->btn_send->setText("send");
+            ui->btn_revbrowse->setEnabled(true);
 
             QMessageBox::warning(this, "success", "file send success", "close");
 
@@ -319,8 +322,24 @@ void Upgrade::upgrade_info_get(VCI_CAN_READ can_read_ymodem)
         ui->file_send_process_show->append("ctrlbox upgrade succ");
     break;
 
-    case CAN_CMD_FILE_CMD_SLAVE:
+    case CAN_CMD_FILE_QT_TO_CTRL_LOG_PER:
+    {
+        QString per = QString::number(can_read_ymodem.Data[1], 10);
+        ui->file_get_show->append("ctrlbox log output : " + per + "%");
+    }
+    break;
 
+    case CAN_CMD_FILE_QT_TO_CTRL_LOG_SUCC:
+    {
+        if(can_read_ymodem.Data[1])
+        {
+            ui->file_get_show->append("ctrlbox log output success!");
+        }
+        else
+        {
+            ui->file_get_show->append("ctrlbox log output failed!");
+        }
+    }
     break;
 
     default:
@@ -477,5 +496,129 @@ uint32_t Upgrade::upgrade_app_crc_cal(void)
     }
 
     return crc_value_get;
+}
+
+void Upgrade::on_btn_revbrowse_clicked()//接收路径保存
+{
+    ui->btn_open_file->setDisabled(true);//打开文件的浏览按键不可按下
+    ui->rev_file_location->setText(QFileDialog::getExistingDirectory(this, "选择目录", ".", QFileDialog::ShowDirsOnly));
+
+    if(ui->rev_file_location->text().isEmpty() != true)
+    {
+        ui->btn_rev->setEnabled(true);
+    }
+    else
+    {
+        ui->btn_rev->setDisabled(true);
+    }
+
+    rx_fifo->buffer = (uint8_t*) (rx_fifo + 1);
+    memset(rx_fifo->buffer, 0, RT_CAN_YMODEM_DEVICE_SIZE);
+    rx_fifo->put_index = 0;
+    rx_fifo->get_index = 0;
+    rx_fifo->is_full = false;
+}
+
+void Upgrade::on_btn_rev_clicked()//接收按键
+{
+    if(receiveButtonStatus == false)
+    {
+        ymodemFileReceive->setFilePath(ui->rev_file_location->text());
+
+        if(ymodemFileReceive->startReceive() == true)
+        {
+            receiveButtonStatus = true;
+
+            ui->btn_revbrowse->setDisabled(true);
+            ui->btn_rev->setText("cancel");
+            ui->progress_rev->setValue(0);
+            ui->btn_open_file->setDisabled(true);//打开文件的浏览按键不可按下
+        }
+        else
+        {
+            QMessageBox::warning(this, "failed", "file receive failed", "close");
+        }
+
+        VCI_CAN_READ rev_start_out;
+        rev_start_out.ID = CAN_ID_QT_TO_OBOX_FILE;
+        rev_start_out.Len = 1;
+        rev_start_out.Data[0] = CAN_CMD_FILE_QT_TO_CTRL_LOG_FILE_START;
+        emit ymodem_can_write(rev_start_out);
+    }
+    else
+    {
+        ymodemFileReceive->stopReceive();
+    }
+}
+
+void Upgrade::receiveProgress(int progress)
+{
+    ui->progress_rev->setValue(progress);
+}
+
+void Upgrade::receiveStatus(YmodemFileReceive::Status status)
+{
+    switch(status)
+    {
+        case YmodemFileReceive::StatusEstablish:
+        {
+            break;
+        }
+
+        case YmodemFileReceive::StatusTransmit:
+        {
+            break;
+        }
+
+        case YmodemFileReceive::StatusFinish:
+        {
+            receiveButtonStatus = false;
+
+            ui->btn_revbrowse->setEnabled(true);
+            ui->btn_rev->setText("receive");
+            ui->btn_open_file->setEnabled(true);//文件打开的浏览按键可按下
+
+            QMessageBox::warning(this, "success", "file receive success", "close");      
+
+            break;
+        }
+
+        case YmodemFileReceive::StatusAbort:
+        {
+            receiveButtonStatus = false;
+
+            ui->btn_revbrowse->setEnabled(true);
+            ui->btn_rev->setText("receive");
+            ui->btn_open_file->setEnabled(true);//文件打开的浏览按键可按下
+
+            QMessageBox::warning(this, "failed", "file receive failed", "close");
+
+            break;
+        }
+
+        case YmodemFileReceive::StatusTimeout:
+        {
+            receiveButtonStatus = false;
+
+            ui->btn_revbrowse->setEnabled(true);
+            ui->btn_rev->setText("receive");
+            ui->btn_open_file->setEnabled(true);//文件打开的浏览按键可按下
+
+            QMessageBox::warning(this, "failed", "file receive failed", "close");
+
+            break;
+        }
+
+        default:
+        {
+            receiveButtonStatus = false;
+
+            ui->btn_revbrowse->setEnabled(true);
+            ui->btn_rev->setText("receive");
+
+            ui->btn_open_file->setEnabled(true);//文件打开的浏览按键可按下
+            QMessageBox::warning(this, "failed", "file receive failed", "close");
+        }
+    }
 }
 

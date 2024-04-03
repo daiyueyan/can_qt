@@ -8,6 +8,7 @@
 #include <QTimer>
 #include "sendthreadcan.h"
 #include "YmodemFileTransmit.h"
+#include "YmodemFileReceive.h"
 #include "canthread.h"
 
 
@@ -52,6 +53,7 @@ private:
     QByteArray txtcon;
     SendThreadCan *thread_cansend;
     YmodemFileTransmit *ymodemFileTransmit;
+    YmodemFileReceive* ymodemFileReceive;
     can_ymodem_rx_fifo_t* rx_fifo;
 
 private slots:
@@ -64,9 +66,17 @@ private slots:
     void on_btn_upgrade_clicked();
 
     void transmitProgress(int progress);
+    void receiveProgress(int progress);
     void transmitStatus(YmodemFileTransmit::Status status);
+    void receiveStatus(YmodemFileReceive::Status status);
     void ymodem_can_send(VCI_CAN_READ can_write_ymodem);
     void on_btn_send_clicked();
+
+    void on_btn_revbrowse_clicked();
+
+    void on_btn_upgrade_2_clicked();
+
+    void on_btn_rev_clicked();
 
 private:
     Ui::Upgrade *ui;

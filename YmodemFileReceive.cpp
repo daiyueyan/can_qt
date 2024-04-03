@@ -31,12 +31,12 @@ void YmodemFileReceive::setFilePath(const QString &path)
 
 void YmodemFileReceive::setPortName(const QString &name)
 {
-    //serialPort->setPortName(name);
+
 }
 
 void YmodemFileReceive::setPortBaudRate(qint32 baudrate)
 {
-    //serialPort->setBaudRate(baudrate);
+
 }
 
 bool YmodemFileReceive::startReceive()
@@ -44,16 +44,6 @@ bool YmodemFileReceive::startReceive()
     progress = 0;
     status   = StatusEstablish;
 
-//    if(serialPort->open(QSerialPort::ReadWrite) == true)
-//    {
-//        readTimer->start(READ_TIME_OUT);
-
-//        return true;
-//    }
-//    else
-//    {
-//        return false;
-//    }
     readTimer->start(READ_TIME_OUT);
 
     return true;
@@ -225,10 +215,39 @@ Ymodem::Code YmodemFileReceive::callback(Status status, uint8_t *buff, uint32_t 
 
 uint32_t YmodemFileReceive::read(uint8_t *buff, uint32_t len)
 {
-    //return serialPort->read((char *)buff, len);
+    uint32_t len_re = 0;
+    uint32_t* len_return = new uint32_t(0);
+
+    emit transmit_read_request(buff, len, len_return);
+    len_re = *len_return;
+    delete len_return;
+    len_return = nullptr;
+
+    return len_re;
 }
 
 uint32_t YmodemFileReceive::write(uint8_t *buff, uint32_t len)
 {
-    //return serialPort->write((char *)buff, len);
+    VCI_CAN_READ can_write_ymodem;
+    uint8_t size_else = 0;
+    uint32_t cur_addr = 0;
+
+    can_write_ymodem.ID = CAN_ID_QT_TO_OBOX_FILE;
+    can_write_ymodem.Data[0] = CAN_CMD_FILE_QT_TO_CTRL_FILE_FILE;
+    //以7个字节读取数据写入can设备中，因为还有一个功能码
+    size_else = len % YMODEM_READ_SEND_OUT;
+    for(cur_addr = 0; cur_addr < (len - size_else); cur_addr+=YMODEM_READ_SEND_OUT)
+    {
+        can_write_ymodem.Len = CAN_FILE_CMD_SIZE + YMODEM_READ_SEND_OUT;
+        memcpy(&can_write_ymodem.Data[1], &buff[cur_addr], YMODEM_READ_SEND_OUT);
+        emit send_file(can_write_ymodem);
+    }
+    if(size_else != 0)
+    {
+        cur_addr = len - size_else;
+        can_write_ymodem.Len = size_else + CAN_FILE_CMD_SIZE;
+        memcpy(&can_write_ymodem.Data[1], &buff[cur_addr], size_else);
+        emit send_file(can_write_ymodem);
+    }
+    return len;
 }

@@ -74,7 +74,7 @@ public:
         groupBox_2->setGeometry(QRect(12, 192, 1100, 620));
         textEdit_2 = new QTextEdit(groupBox_2);
         textEdit_2->setObjectName(QString::fromUtf8("textEdit_2"));
-        textEdit_2->setGeometry(QRect(8, 28, 1080, 590));
+        textEdit_2->setGeometry(QRect(8, 28, 1080, 550));
         pushButton = new QPushButton(centralWidget);
         pushButton->setObjectName(QString::fromUtf8("pushButton"));
         pushButton->setGeometry(QRect(512, 32, 80, 29));
